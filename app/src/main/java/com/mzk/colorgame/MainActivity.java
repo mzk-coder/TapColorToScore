@@ -17,6 +17,7 @@ import android.widget.TextView;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -25,7 +26,7 @@ public class MainActivity extends AppCompatActivity {
 
     List<ModelColor> colorData = Arrays.asList(new ModelColor("Blue",R.color.colorBlue),
             new ModelColor("Green",R.color.colorGreen),
-            new ModelColor(colorToTap,R.color.colorGray),
+            new ModelColor("Yellow",R.color.colorYellow),
             new ModelColor("Red",R.color.colorRed));
 
 
@@ -48,11 +49,13 @@ public class MainActivity extends AppCompatActivity {
 
         gridAdapter = new GridAdapter(colorData, this);
         gridAdapter.setClickListener(color -> {
-            if (color.equals(colorToTap)){
+            if (color){
                 currentScore++;
-                newScore = "Score : "+ currentScore;
-                tvScore.setText(newScore);
+            }else{
+                currentScore--;
             }
+            newScore = "Score : "+ currentScore;
+            tvScore.setText(newScore);
         });
 
 
@@ -67,9 +70,11 @@ public class MainActivity extends AppCompatActivity {
 
 
         handler.postDelayed( runnable = () -> {
+            Random random = new Random();
+            int num = random.nextInt(4);
 
-            Collections.shuffle(colorData);
-            gridAdapter.setList(colorData);
+            //Collections.shuffle(colorData);
+            gridAdapter.updateGray(num);
 
             handler.postDelayed(runnable, delay);
         }, delay);
@@ -89,6 +94,10 @@ public class MainActivity extends AppCompatActivity {
         Context context;
         OnColorClick onColorClick=null;
 
+        public int grayNum = -1;
+
+        int gray = R.color.colorGray;
+
         public GridAdapter(List<ModelColor> colors, Context context) {
             this.colors = colors;
             this.context = context;
@@ -103,7 +112,11 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onBindViewHolder(@NonNull Holder holder, int position) {
-            holder.itemView.setBackgroundColor(context.getResources().getColor(colors.get(position).color));
+            if (position!=grayNum) {
+                holder.itemView.setBackgroundColor(context.getResources().getColor(colors.get(position).color));
+            }else {
+                holder.itemView.setBackgroundColor(context.getResources().getColor(gray));
+            }
         }
 
         public void setClickListener(OnColorClick onColorClick){
@@ -121,13 +134,19 @@ public class MainActivity extends AppCompatActivity {
             notifyDataSetChanged();
         }
 
+        @SuppressLint("NotifyDataSetChanged")
+        void updateGray(int num){
+            grayNum = num;
+            notifyDataSetChanged();
+        }
+
         class Holder extends RecyclerView.ViewHolder{
 
             public Holder(@NonNull View itemView) {
                 super(itemView);
                 itemView.setOnClickListener(v -> {
                     if (onColorClick!=null){
-                        onColorClick.onClick(colors.get(getLayoutPosition()).name);
+                        onColorClick.onClick(grayNum==getLayoutPosition());
                     }
                 });
 
@@ -136,8 +155,10 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+
+
     interface OnColorClick{
-        void onClick(String color);
+        void onClick(boolean isGray);
     }
 
 
